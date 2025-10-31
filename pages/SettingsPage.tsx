@@ -6,6 +6,8 @@ import LoadingSpinner from '../components/LoadingSpinner';
 const SettingsPage: React.FC = () => {
   const { user, showToast } = useContext(AppContext);
   
+  console.log(user);
+  
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,

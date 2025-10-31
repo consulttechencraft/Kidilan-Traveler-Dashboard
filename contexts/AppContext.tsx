@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
-import { AppContextType, Page } from '../types';
-import { login as apiLogin } from '../api/mockApi';
+import { AppContextType, Page, User } from '../types';
+import { login as apiLogin, getMe } from '../api/mockApi';
 
 export const AppContext = createContext<AppContextType>(null!);
 
@@ -8,6 +8,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activePage, _setActivePage] = useState<Page>('products');
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState('');
+  const [user, setUser] = useState<User | null>(null);
   
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [token, setToken] = useState<string | null>(null);
@@ -30,33 +31,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   const logout = useCallback(() => {
     setToken(null);
+    setUser(null);
     setIsAuthenticated(false);
     sessionStorage.removeItem('authToken');
     _setActivePage('products');
     showToast("You have been successfully logged out.");
   }, []);
 
-  useEffect(() => {
+  const fetchUser = useCallback(async () => {
     try {
-      const storedToken = sessionStorage.getItem('authToken');
-      // Avoid parsing the literal string "undefined" which would throw a SyntaxError
-      if (storedToken) {
-        setToken(storedToken);
-        setIsAuthenticated(true);
-      }
+      const userData = await getMe();
+      setUser(userData);
     } catch (error) {
-      console.error("Failed to parse user data from sessionStorage", error);
+      console.error("Failed to fetch user data", error);
       logout();
     }
-    setIsLoading(false);
   }, [logout]);
 
+  useEffect(() => {
+    const initialize = async () => {
+      setIsLoading(true);
+      try {
+        const storedToken = sessionStorage.getItem('authToken');
+        if (storedToken) {
+          setToken(storedToken);
+          setIsAuthenticated(true);
+          await fetchUser();
+        }
+      } catch (error) {
+        console.error("Failed to initialize app", error);
+        logout();
+      }
+      setIsLoading(false);
+    };
+
+    initialize();
+  }, [fetchUser, logout]);
+
   const login = async (name: string, password: string) => {
-    const { token: authToken } = await apiLogin(name, password);
+    const { user, token: authToken } = await apiLogin(name, password);
     sessionStorage.setItem('authToken', authToken);
     setToken(authToken);
+    setUser(user);
     setIsAuthenticated(true);
-    showToast(`Welcome back!`);
+    showToast(`Welcome back, ${user.name}!`);
   };
 
   const contextValue: AppContextType = {
@@ -68,6 +86,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast,
     isAuthenticated,
     token,
+    user,
     isLoading,
     login,
     logout,
