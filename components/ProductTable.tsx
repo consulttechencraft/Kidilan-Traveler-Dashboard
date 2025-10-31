@@ -78,7 +78,7 @@ const ProductTable: React.FC<{ searchQuery: string }> = ({ searchQuery }) => {
 
   useEffect(() => {
     fetchAndSetProducts();
-  }, [fetchAndSetProducts]);
+  }, []);
 
   const handleAddClick = () => {
     setEditingProduct(null);
