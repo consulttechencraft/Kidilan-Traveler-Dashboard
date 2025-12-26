@@ -53,6 +53,7 @@ export interface Product {
   price: number;
   stock: number;
   category: string;
+  categoryId?: string;
   imageUrls: string[];
   specifications: { key: string; value: string; }[];
 }

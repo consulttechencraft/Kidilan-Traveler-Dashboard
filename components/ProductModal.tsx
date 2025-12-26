@@ -60,7 +60,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, onSave, pr
     const newProductInitialState = { name: '', category: '', price: '', stock: '', imageUrls: [] as string[], specifications: [] as { key: string; value: string; }[], description: '', subHeading: '' };
   
   const getInitialState = () => product 
-    ? { name: product.name, category: product.category, price: String(product.price), stock: String(product.stock), imageUrls: product.imageUrls || [], specifications: product.specifications || [], description: product.description || '', subHeading: product.subHeading || '' }
+    ? { name: product.name, category: product.categoryId || product.category, price: String(product.price), stock: String(product.stock), imageUrls: product.imageUrls || [], specifications: product.specifications || [], description: product.description || '', subHeading: product.subHeading || '' }
     : newProductInitialState;
 
   const [formData, setFormData] = useState(getInitialState());

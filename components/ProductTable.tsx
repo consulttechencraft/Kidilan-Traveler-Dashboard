@@ -161,7 +161,7 @@ const ProductTable: React.FC<{ searchQuery: string }> = ({ searchQuery }) => {
           )}
         </td>
         <td data-label="Product Name" className="px-6 py-4 font-medium text-gray-900">{product.name}</td>
-        <td data-label="Category" className="px-6 py-4">{product.categoryName}</td>
+        <td data-label="Category" className="px-6 py-4">{product.category}</td>
         <td data-label="Price" className="px-6 py-4">${product.price.toFixed(2)}</td>
         <td data-label="Stock" className="px-6 py-4">{product.stock}</td>
         <td data-label="Actions" className="px-6 py-4 text-right space-x-2">
