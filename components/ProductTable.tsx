@@ -80,6 +80,17 @@ const ProductTable: React.FC<{ searchQuery: string }> = ({ searchQuery }) => {
     fetchAndSetProducts();
   }, []);
 
+  // Don't automatically open modal on refresh/login - only when explicitly requested
+  // Previously this would open the modal if there was saved form data, which was causing the issue
+  // useEffect(() => {
+  //   const saved = localStorage.getItem('productModalFormData');
+  //   if (saved) {
+  //     setEditingProduct(null);
+  //     setIsModalOpen(true);
+  //     showToast('Restored unsaved product draft.');
+  //   }
+  // }, [showToast]);
+
   const handleAddClick = () => {
     setEditingProduct(null);
     setIsModalOpen(true);

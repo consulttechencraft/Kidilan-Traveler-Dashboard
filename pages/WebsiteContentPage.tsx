@@ -205,7 +205,7 @@ const PortfolioItemModal: React.FC<PortfolioItemModalProps> = ({ isOpen, onClose
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [image, setImage] = useState<File | null>(null);
-    const [order, setOrder] = useState<number>(0);
+    const [order, setOrder] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<{[key: string]: string}>({});
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -215,14 +215,14 @@ const PortfolioItemModal: React.FC<PortfolioItemModalProps> = ({ isOpen, onClose
             if (itemToEdit) {
                 setTitle(itemToEdit.title);
                 setDescription(itemToEdit.description);
-                setOrder(itemToEdit.order);
+                setOrder(itemToEdit.order !== undefined ? String(itemToEdit.order) : '');
                 setImagePreview(itemToEdit.imageUrl);
                 setImage(null);
             } else {
                 setTitle('');
                 setDescription('');
                 setImage(null);
-                setOrder(0);
+                setOrder(''); // Set to empty string for new items
                 setImagePreview(null);
             }
             setErrors({});
@@ -285,7 +285,9 @@ const PortfolioItemModal: React.FC<PortfolioItemModalProps> = ({ isOpen, onClose
             formData.append('description', description);
             if (image) formData.append('image', image);
             formData.append('section', section);
-            formData.append('order', order.toString());
+            // Convert empty string to 0, otherwise parse the number
+            const orderValue = order === '' ? 0 : parseInt(order, 10) || 0;
+            formData.append('order', orderValue.toString());
             
             await onSave(formData);
             onClose();
@@ -347,12 +349,21 @@ const PortfolioItemModal: React.FC<PortfolioItemModalProps> = ({ isOpen, onClose
                         <div>
                             <label htmlFor="order" className="block text-sm font-medium text-gray-700 mb-1">Display Order</label>
                             <input
-                                type="number"
+                                type="text"
                                 id="order"
+                                inputMode="numeric"
+                                pattern="\d*"
                                 value={order}
-                                onChange={(e) => setOrder(parseInt(e.target.value) || 0)}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    // Allow empty value during input to enable backspace; keep only digits when present
+                                    if (value === '') {
+                                        setOrder('');
+                                    } else {
+                                        setOrder(value.replace(/\D/g, ''));
+                                    }
+                                }}
                                 className="w-full p-2 border border-gray-300 rounded-md"
-                                min="0"
                             />
                             <p className="text-gray-500 text-xs mt-1">Lower numbers appear first</p>
                         </div>

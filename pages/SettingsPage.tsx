@@ -5,23 +5,27 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 const SettingsPage: React.FC = () => {
   const { user, showToast } = useContext(AppContext);
-  
-  console.log(user);
-  
-  const [notifications, setNotifications] = useState({
-    email: true,
-    push: false,
-  });
 
-  const handleNotificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNotifications({ ...notifications, [e.target.name]: e.target.checked });
-  };
+  const [accountHolderName, setAccountHolderName] = useState<string>('');
+  const [accountNumber, setAccountNumber] = useState<string>('');
+  const [bankName, setBankName] = useState<string>('');
+  const [ifscCode, setIfscCode] = useState<string>('');
 
-  const handleNotificationsSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Saving notification settings:', notifications);
-    showToast('Notification settings saved successfully!');
-  };
+  useEffect(() => {
+    // Prefill bank details if available
+    const bank = localStorage.getItem('bankDetails');
+    if (bank) {
+      try {
+        const parsed = JSON.parse(bank);
+        setAccountHolderName(parsed.accountHolderName || '');
+        setAccountNumber(parsed.accountNumber || '');
+        setBankName(parsed.bankName || '');
+        setIfscCode(parsed.ifscCode || '');
+      } catch (e) {
+        console.error('Failed to parse bank details', e);
+      }
+    }
+  }, []);
 
 
   if (!user) {
@@ -35,59 +39,76 @@ const SettingsPage: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="bg-white p-6 md:p-8 rounded-xl shadow-md">
-        <h3 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">Profile Settings</h3>
+        <h3 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">Bank Account Information</h3>
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-              <p className="w-full p-3 border border-gray-200 rounded-lg bg-gray-100 text-gray-800">{user.name}</p>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Account Holder Name</label>
+              <input
+                type="text"
+                id="accountHolderName"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D7A79]"
+                placeholder="Account holder name"
+                value={accountHolderName}
+                onChange={(e) => setAccountHolderName(e.target.value)}
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-              <p className="w-full p-3 border border-gray-200 rounded-lg bg-gray-100 text-gray-800">{user.email}</p>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+              <input
+                type="text"
+                id="accountNumber"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D7A79]"
+                placeholder="Account number"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+              />
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-            <p className="w-full p-3 border rounded-lg bg-gray-200 text-gray-500 cursor-not-allowed">{user.role}</p>
-          </div>
-           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
-            <div className="flex items-center gap-4">
-                <img src={`https://ui-avatars.com/api/?name=${user.name.replace(' ', '+')}&background=A4F44A&color=2D7A79&bold=true`} alt={user.name} className="w-16 h-16 rounded-full object-cover" />
-                <button type="button" onClick={() => showToast('Feature coming soon!')} className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">Change</button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+              <input
+                type="text"
+                id="bankName"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D7A79]"
+                placeholder="Bank name"
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+              />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">IFSC Code</label>
+              <input
+                type="text"
+                id="ifscCode"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D7A79]"
+                placeholder="IFSC code"
+                value={ifscCode}
+                onChange={(e) => setIfscCode(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="pt-4 flex justify-end">
+            <button
+              type="button"
+              className="px-6 py-2 rounded-lg text-white bg-[#2D7A79] hover:bg-opacity-90 font-semibold"
+              onClick={() => {
+                if (!accountHolderName || !accountNumber || !bankName || !ifscCode) {
+                  showToast('Please fill in all bank account details.');
+                  return;
+                }
+
+                // Persist bank details locally (and you can wire this to an API later)
+                const bank = { accountHolderName, accountNumber, bankName, ifscCode };
+                localStorage.setItem('bankDetails', JSON.stringify(bank));
+                showToast('Bank account details updated successfully!');
+              }}
+            >
+              Update Bank Details
+            </button>
           </div>
         </div>
-      </div>
-
-      <div className="bg-white p-6 md:p-8 rounded-xl shadow-md">
-        <h3 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">Notification Settings</h3>
-        <form className="space-y-6" onSubmit={handleNotificationsSubmit}>
-            <div className="flex items-center justify-between">
-                <div>
-                    <h4 className="font-medium text-gray-800">Email Notifications</h4>
-                    <p className="text-sm text-gray-500">Get emails to find out what's going on.</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" name="email" checked={notifications.email} onChange={handleNotificationChange} className="sr-only peer" />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2D7A79]"></div>
-                </label>
-            </div>
-             <div className="flex items-center justify-between">
-                <div>
-                    <h4 className="font-medium text-gray-800">Push Notifications</h4>
-                    <p className="text-sm text-gray-500">Get push notifications on your phone.</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" name="push" checked={notifications.push} onChange={handleNotificationChange} className="sr-only peer"/>
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2D7A79]"></div>
-                </label>
-            </div>
-            <div className="pt-4 flex justify-end">
-                <button type="submit" className="px-6 py-2 rounded-lg text-white bg-[#2D7A79] hover:bg-opacity-90 font-semibold">Save Changes</button>
-            </div>
-        </form>
       </div>
     </div>
   );

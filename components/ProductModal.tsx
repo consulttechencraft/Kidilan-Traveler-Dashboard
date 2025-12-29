@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { Product, Category } from '../types';
 import { XIcon } from './icons';
 
@@ -28,7 +28,12 @@ const useFocusTrap = (ref: React.RefObject<HTMLElement>, isOpen: boolean) => {
             }
         };
 
-        firstElement?.focus();
+        // Only set initial focus if focus is not already inside the modal (avoid stealing focus while user types)
+        const active = document.activeElement;
+        if (!ref.current.contains(active)) {
+            firstElement?.focus();
+        }
+
         ref.current.addEventListener('keydown', handleKeyDown);
 
         return () => {
@@ -70,6 +75,53 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, onSave, pr
   const [newSpecKey, setNewSpecKey] = useState('');
   const [newSpecValue, setNewSpecValue] = useState('');
   const [specError, setSpecError] = useState<string | null>(null);
+
+  // Load saved form data from localStorage if available
+  useEffect(() => {
+    if (isOpen && !product) { // Only for new products, not editing existing ones
+      const savedFormData = localStorage.getItem('productModalFormData');
+      if (savedFormData) {
+        try {
+          const parsedData = JSON.parse(savedFormData);
+          setFormData(parsedData);
+        } catch (e) {
+          console.error('Error parsing saved form data', e);
+        }
+      }
+    }
+  }, [isOpen, product]);
+
+  // Save form data to localStorage, debounced to avoid frequent writes
+  // Using a ref to avoid re-renders that cause input focus loss
+  const formDataRef = useRef(formData);
+  const timeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
+
+  // This effect handles saving to localStorage when formData changes
+  // It uses refs to avoid causing re-renders
+  useEffect(() => {
+    if (!product) { // Only for new products
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+      }
+
+      // Set a new timeout to save to localStorage
+      timeoutRef.current = window.setTimeout(() => {
+        localStorage.setItem('productModalFormData', JSON.stringify(formDataRef.current));
+      }, 500);
+
+      // Cleanup function
+      return () => {
+        if (timeoutRef.current) {
+          window.clearTimeout(timeoutRef.current);
+        }
+      };
+    }
+  }, [formData, product]); // This will trigger on every formData change but won't cause re-renders since we use the ref
   
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -80,6 +132,11 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, onSave, pr
       setFormData(getInitialState());
       setErrors({});
       setIsSubmitting(false);
+    } else {
+      // When modal is closed, clear the saved form data if it was for a new product
+      if (!product) {
+        localStorage.removeItem('productModalFormData');
+      }
     }
   }, [isOpen, product]);
 
@@ -169,7 +226,7 @@ const handleRemoveSpecification = (indexToRemove: number) => {
     const isValid = validate();
     console.log('Validation result:', isValid);
     if (!isValid) return;
-    
+
     console.log('formData before saving:', formData);
     setIsSubmitting(true);
     const productToSave = {
@@ -183,10 +240,14 @@ const handleRemoveSpecification = (indexToRemove: number) => {
       description: formData.description,
       subHeading: formData.subHeading,
     };
-    
+
     try {
         console.log('Calling onSave with product:', productToSave);
         await onSave(productToSave as Product);
+        // Clear saved form data on successful save
+        if (!product) { // Only for new products
+          localStorage.removeItem('productModalFormData');
+        }
         setIsSubmitting(false);
     } catch(e) {
         console.error('Error during onSave:', e);
@@ -197,7 +258,7 @@ const handleRemoveSpecification = (indexToRemove: number) => {
   const InputField: React.FC<{name: 'name' | 'price' | 'stock', label: string, type?: string}> = ({name, label, type='text'}) => (
     <div>
       <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      <input id={name} type={type} name={name} value={formData[name]} onChange={handleChange} placeholder={`Enter ${label.toLowerCase()}`} min="0" step={type === 'number' ? "0.01" : undefined} className={`w-full p-3 border rounded-lg focus:ring-2 ${errors[name] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-[#2D7A79]'}`} aria-invalid={!!errors[name]} />
+      <input id={name} type={type} name={name} value={formData[name]} onChange={handleChange} placeholder={`Enter ${label.toLowerCase()}`} min="0" step={type === 'number' ? 0.01 : undefined} className={`w-full p-3 border rounded-lg focus:ring-2 ${errors[name] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-[#2D7A79]'}`} aria-invalid={!!errors[name]} />
       {errors[name] && <p className="text-red-600 text-sm mt-1">{errors[name]}</p>}
     </div>
   );
