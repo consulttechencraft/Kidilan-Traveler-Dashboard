@@ -61,6 +61,36 @@ type FormErrors = {
   subHeading?: string;
 };
 
+const InputField: React.FC<{
+  name: string; 
+  label: string; 
+  type?: string;
+  value: string | number;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  error?: string;
+}> = ({name, label, type='text', value, onChange, error}) => (
+  <div>
+    <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+    <input id={name} type={type} name={name} value={value} onChange={onChange} placeholder={`Enter ${label.toLowerCase()}`} min="0" step={type === 'number' ? 0.01 : undefined} className={`w-full p-3 border rounded-lg focus:ring-2 ${error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-[#2D7A79]'}`} aria-invalid={!!error} />
+    {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
+  </div>
+);
+
+const TextareaField: React.FC<{
+  name: string; 
+  label: string; 
+  rows?: number;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  error?: string;
+}> = ({name, label, rows=3, value, onChange, error}) => (
+  <div>
+    <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+    <textarea id={name} name={name} value={value} onChange={onChange} placeholder={`Enter ${label.toLowerCase()}`} rows={rows} className={`w-full p-3 border rounded-lg focus:ring-2 ${error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-[#2D7A79]'}`} aria-invalid={!!error}></textarea>
+    {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
+  </div>
+);
+
 const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, onSave, product, categories }) => {
     const newProductInitialState = { name: '', category: '', price: '', stock: '', imageUrls: [] as string[], specifications: [] as { key: string; value: string; }[], description: '', subHeading: '' };
   
@@ -142,7 +172,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, onSave, pr
 
   if (!isOpen) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name as keyof FormErrors]) {
@@ -255,22 +285,6 @@ const handleRemoveSpecification = (indexToRemove: number) => {
     }
   };
 
-  const InputField: React.FC<{name: 'name' | 'price' | 'stock', label: string, type?: string}> = ({name, label, type='text'}) => (
-    <div>
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      <input id={name} type={type} name={name} value={formData[name]} onChange={handleChange} placeholder={`Enter ${label.toLowerCase()}`} min="0" step={type === 'number' ? 0.01 : undefined} className={`w-full p-3 border rounded-lg focus:ring-2 ${errors[name] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-[#2D7A79]'}`} aria-invalid={!!errors[name]} />
-      {errors[name] && <p className="text-red-600 text-sm mt-1">{errors[name]}</p>}
-    </div>
-  );
-
-  const TextareaField: React.FC<{name: 'description' | 'subHeading', label: string, rows?: number}> = ({name, label, rows=3}) => (
-    <div>
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      <textarea id={name} name={name} value={formData[name]} onChange={handleChange} placeholder={`Enter ${label.toLowerCase()}`} rows={rows} className={`w-full p-3 border rounded-lg focus:ring-2 ${errors[name] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-[#2D7A79]'}`} aria-invalid={!!errors[name]}></textarea>
-      {errors[name] && <p className="text-red-600 text-sm mt-1">{errors[name]}</p>}
-    </div>
-  );
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div ref={modalRef} className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
@@ -279,9 +293,28 @@ const handleRemoveSpecification = (indexToRemove: number) => {
         </button>
         <h2 id="modal-title" className="text-2xl font-bold mb-6 text-gray-800">{product ? 'Edit Product' : 'Add Product'}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <InputField name="name" label="Product Name" />
-          <TextareaField name="subHeading" label="Sub Heading" rows={2} />
-          <TextareaField name="description" label="Description" />
+          <InputField 
+            name="name" 
+            label="Product Name" 
+            value={formData.name} 
+            onChange={handleChange} 
+            error={errors.name} 
+          />
+          <TextareaField 
+            name="subHeading" 
+            label="Sub Heading" 
+            rows={2} 
+            value={formData.subHeading} 
+            onChange={handleChange} 
+            error={errors.subHeading} 
+          />
+          <TextareaField 
+            name="description" 
+            label="Description" 
+            value={formData.description} 
+            onChange={handleChange} 
+            error={errors.description} 
+          />
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Specifications</label>
@@ -379,8 +412,22 @@ const handleRemoveSpecification = (indexToRemove: number) => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <InputField name="price" label="Price" type="number" />
-              <InputField name="stock" label="Stock" type="number" />
+              <InputField 
+                name="price" 
+                label="Price" 
+                type="number" 
+                value={formData.price} 
+                onChange={handleChange} 
+                error={errors.price} 
+              />
+              <InputField 
+                name="stock" 
+                label="Stock" 
+                type="number" 
+                value={formData.stock} 
+                onChange={handleChange} 
+                error={errors.stock} 
+              />
           </div>
 
           <div className="flex justify-end space-x-4 pt-4">
