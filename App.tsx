@@ -6,7 +6,6 @@ import ProductsPage from './pages/ProductsPage';
 import CategoriesPage from './pages/CategoriesPage';
 import OrdersPage from './pages/OrdersPage';
 import ReportsPage from './pages/ReportsPage';
-import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import OffersPage from './pages/OffersPage';
 import WebsiteContentPage from './pages/WebsiteContentPage';
@@ -71,8 +70,6 @@ const App: React.FC = () => {
         return <OffersPage />;
       case 'websiteContent':
         return <WebsiteContentPage />;
-      case 'settings':
-        return <SettingsPage />;
       default:
         return <DashboardPage />;
     }
