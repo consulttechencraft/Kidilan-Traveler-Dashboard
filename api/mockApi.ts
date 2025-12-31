@@ -73,9 +73,6 @@ export const login = async (
   };
 };
 
-export const getMe = async (): Promise<User> => {
-  return apiRequest("/auth/me");
-};
 
 // --- DASHBOARD ---
 export const getDashboardStats = async (): Promise<any> => {

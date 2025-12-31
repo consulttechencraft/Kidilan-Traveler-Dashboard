@@ -50,16 +50,6 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, pageDescription }) => {
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl z-20 border py-1">
                     <button
                     onClick={() => {
-                        setActivePage('settings');
-                        setIsDropdownOpen(false);
-                    }}
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                    >
-                    <SettingsIcon className="w-5 h-5 mr-3" />
-                    Profile Settings
-                    </button>
-                    <button
-                    onClick={() => {
                         logout();
                         setIsDropdownOpen(false);
                     }}

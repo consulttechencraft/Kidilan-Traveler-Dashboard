@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { AppContextType, Page, User } from '../types';
-import { login as apiLogin, getMe } from '../api/mockApi';
+import { login as apiLogin } from '../api/mockApi';
 
 export const AppContext = createContext<AppContextType>(null!);
 
@@ -48,18 +48,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast("You have been successfully logged out.");
   }, []);
 
-  const fetchUser = useCallback(async () => {
-    try {
-      const userData = await getMe();
-      setUser(userData);
-      // Cache the user for offline/resilient startup
-      localStorage.setItem('authUser', JSON.stringify(userData));
-    } catch (error) {
-      console.error("Failed to fetch user data", error);
-      throw error; // Let caller decide how to handle
-    }
-  }, []);
-
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true);
@@ -77,25 +65,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (storedToken) {
           setToken(storedToken);
           setIsAuthenticated(true);
-          try {
-            await fetchUser();
-          } catch (err) {
-            // If fetching user fails (backend down or token invalid), fall back to cached user if present
-            console.warn('Failed to fetch user on init, using cached user if present', err);
-            const cached = localStorage.getItem('authUser');
-            if (cached) {
-              try {
-                const parsed = JSON.parse(cached);
-                setUser(parsed);
-                showToast('Using cached profile (offline mode).');
-              } catch (e) {
-                console.error('Failed to parse cached authUser', e);
-              }
-            } else {
-              // Do not force logout here to avoid logging the admin out unexpectedly on refresh
-              console.warn('No cached profile available. User will be required to login again if server validation is needed.');
-            }
-          }
         }
       } catch (error) {
         console.error("Failed to initialize app", error);
@@ -105,7 +74,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     initialize();
-  }, [fetchUser]);
+  }, []);
 
   // Listen for hash changes to update active page when user navigates via browser
   useEffect(() => {
